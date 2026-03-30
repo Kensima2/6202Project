@@ -154,7 +154,7 @@ def main():
     for n in ["ACTIVE","NIMP","PIMP","CONT","M1","V1"]:
         np.save(tmp/f"{n}.npy", prepared[n])
 
-    poly_out / "resist.npy"
+    # poly_out / "resist.npy"  # TODO: unclear purpose, likely dead code
 
     # Stage2 etch
     s2p = flow["stage_params"]["etch"]
