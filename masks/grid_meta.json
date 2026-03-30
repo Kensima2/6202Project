@@ -1,0 +1,41 @@
+{
+  "gds": "C:\\Users\\wbw\\Desktop\\virtual_minifab_7mask_fullpackage\\gds\\basic.gds",
+  "top_cell": "00__mask_new",
+  "bbox": [
+    -25000.0,
+    -25087.5,
+    25000.0,
+    25000.0
+  ],
+  "N": 1024,
+  "layers": {
+    "ACTIVE": [
+      2,
+      0
+    ],
+    "POLY": [
+      4,
+      0
+    ],
+    "NIMP": [
+      6,
+      0
+    ],
+    "PIMP": [
+      8,
+      0
+    ],
+    "CONT": [
+      10,
+      0
+    ],
+    "M1": [
+      12,
+      0
+    ],
+    "V1": [
+      99,
+      0
+    ]
+  }
+}

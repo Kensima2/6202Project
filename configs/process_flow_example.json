@@ -1,0 +1,83 @@
+{
+  "gds_input": {
+    "enabled": true,
+    "gds_path": "gds/standard_cell.gds",
+    "top_cell": "",
+    "out_mask_dir": "masks",
+    "grid_size": 1024
+  },
+  "mask_layers": [
+    "ACTIVE",
+    "POLY",
+    "NIMP",
+    "PIMP",
+    "CONT",
+    "M1",
+    "V1"
+  ],
+  "mask_strategy": {
+    "POLY": {
+      "mode": "full_litho",
+      "litho_config": "configs/litho_config.json"
+    },
+    "CONT": {
+      "mode": "simple_litho",
+      "bias_nm": 0.0,
+      "overlay_nm": 10.0
+    },
+    "V1": {
+      "mode": "simple_litho",
+      "bias_nm": 0.0,
+      "overlay_nm": 10.0
+    },
+    "ACTIVE": {
+      "mode": "ideal",
+      "bias_nm": 0.0,
+      "overlay_nm": 0.0
+    },
+    "NIMP": {
+      "mode": "ideal",
+      "bias_nm": 0.0,
+      "overlay_nm": 0.0
+    },
+    "PIMP": {
+      "mode": "ideal",
+      "bias_nm": 0.0,
+      "overlay_nm": 0.0
+    },
+    "M1": {
+      "mode": "ideal",
+      "bias_nm": 0.0,
+      "overlay_nm": 0.0
+    }
+  },
+  "stage_params": {
+    "dx_nm": 10.0,
+    "etch": {
+      "thr": 0.5,
+      "bias_px": 1,
+      "anisotropy": 0.9
+    },
+    "implant_thermal": {
+      "implant_dose_cm2": 10000000000000.0,
+      "implant_energy_keV": 20.0,
+      "tilt_deg": 7.0,
+      "channeling": true,
+      "screen_oxide_nm": 0.0,
+      "anneal_mode": "RTA",
+      "T_C": 1000.0,
+      "t_s": 10.0
+    },
+    "met_cmp": {
+      "overburden_nm": 300.0,
+      "target_overburden_nm": 0.0,
+      "pattern_density_window": 31
+    },
+    "device": {
+      "tox_nm": 2.0,
+      "W_nm": 1000.0,
+      "Leff_sigma_nm": 2.0,
+      "vt_target_max": 0.7
+    }
+  }
+}

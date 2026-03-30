@@ -1,0 +1,13 @@
+{
+  "m1_density_mean": 0.09010826051235199,
+  "v1_density_mean": 0.009845778346061707,
+  "dishing_proxy": 0.7279134392738342,
+  "erosion_proxy": 0.08109743148088455,
+  "t_post_cmp_nm_proxy": 71.45934775471687,
+  "R_interconnect_proxy": 0.02507892072944665,
+  "areas": {
+    "cont_px": 105988,
+    "m1_px": 96881,
+    "v1_px": 10429
+  }
+}

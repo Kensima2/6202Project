@@ -1,0 +1,52 @@
+{
+  "outdir": "outputs",
+  "pattern": "klayout_2d",
+  "pitch_nm": 180,
+  "duty_cycle": 0.5,
+  "wavelength_nm": 193.0,
+  "na": 0.93,
+  "sigma_in": 0.0,
+  "sigma_out": 0.7,
+  "n_source_samples": 16,
+  "dose_list": [
+    0.9,
+    0.95,
+    1.0,
+    1.05,
+    1.1
+  ],
+  "defocus_list_nm": [
+    -100,
+    -50,
+    0,
+    50,
+    100
+  ],
+  "target_cd_nm": 100.0,
+  "cd_tol_nm": 10.0,
+  "peb_blur_nm": 25.0,
+  "develop_threshold": 0.5,
+  "klayout_mask": {
+    "enabled": true,
+    "png_path": "masks/klayout_mask.png",
+    "out_npy_path": "masks/custom_mask.npy",
+    "size": 512,
+    "threshold": 0.5,
+    "invert": false,
+    "auto_convert_on_run": true
+  },
+  "ret": {
+    "psm": {
+      "enabled": false,
+      "phase_rad": 3.141592653589793,
+      "region": "background"
+    },
+    "opc": {
+      "enabled": false,
+      "mask_bias_nm": 0.0
+    },
+    "smo": {
+      "enabled": false
+    }
+  }
+}

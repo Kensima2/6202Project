@@ -1,0 +1,6 @@
+numpy>=1.23
+matplotlib>=3.7
+pillow>=10.0
+gdstk>=0.9
+scipy>=1.10  # optional (some lithography modules may use it)
+tqdm>=4.0   # optional

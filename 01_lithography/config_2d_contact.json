@@ -1,0 +1,74 @@
+{
+  "target_cd_nm": 180.0,
+  "cd_tol_nm": 10.0,
+  "pattern": "contact_2d",
+  "pitch_nm": 400.0,
+  "duty_cycle": 0.5,
+  "mask_tone": "bright",
+  "resist_type": "positive",
+  "develop_threshold": 0.5,
+  "peb_blur_nm": 18.0,
+  "wavelength_nm": 193.0,
+  "na": 0.93,
+  "sigma_in": 0.0,
+  "sigma_out": 0.7,
+  "n_source_samples": 12,
+  "dose_sweep": {
+    "start": 0.7,
+    "stop": 1.3,
+    "num": 121
+  },
+  "defocus_sweep_nm": {
+    "start": -200,
+    "stop": 200,
+    "num": 161
+  },
+  "dx_nm": 2.0,
+  "sim_pitches": 3,
+  "spin_coating": {
+    "enabled": true,
+    "rpm": 3000,
+    "spin_time_s": 30,
+    "viscosity_pa_s": 0.03,
+    "density_kg_m3": 1000,
+    "solids_fraction": 0.25,
+    "k": 1.0,
+    "wafer_radius_mm": 75.0,
+    "nonuniformity_pct": 2.0,
+    "edge_bead_nm": 80.0,
+    "edge_bead_width_mm": 2.0
+  },
+  "resist_coupling": {
+    "base_thickness_nm": 300.0,
+    "peb_blur_scale_power": 0.5,
+    "threshold_shift_per_100nm": 0.02
+  },
+  "ret": {
+    "psm": {
+      "enabled": false,
+      "phase_rad": 3.14159,
+      "region": "spaces"
+    },
+    "opc": {
+      "enabled": false,
+      "mask_bias_nm": 0.0,
+      "notes": "1D uses bias->duty. 2D uses morphology dilate/erode."
+    },
+    "smo": {
+      "enabled": false,
+      "sigma_out_list": [
+        0.3,
+        0.5,
+        0.7,
+        0.9
+      ],
+      "bias_nm_list": [
+        -40,
+        -20,
+        0,
+        20,
+        40
+      ]
+    }
+  }
+}
