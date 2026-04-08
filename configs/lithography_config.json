@@ -1,20 +1,20 @@
 {
-  "target_cd_nm": 45,
-  "cd_tol_nm": 5,
+  "target_cd_nm": 180,
+  "cd_tol_nm": 10,
 
   "pattern": "line_space_1d",
-  "pitch_nm": 90,
+  "pitch_nm": 360,
   "duty_cycle": 0.5,
   "mask_tone": "dark",
 
   "resist_type": "positive",
   "develop_threshold": 0.5,
-  "peb_blur_nm": 10,
+  "peb_blur_nm": 5,
 
   "wavelength_nm": 193,
-  "na": 0.85,
-  "sigma_in": 0.3,
-  "sigma_out": 0.7,
+  "na": 0.93,
+  "sigma_in": 0,
+  "sigma_out": 0.5,
   "n_source_samples": 41,
 
   "dose0": 1.0,
@@ -35,13 +35,10 @@
   "sim_pitches": 4,
 
   "ret": {
-    "psm": {
-      "enabled": false
-    },
-    "opc": {
-      "enabled": false
-    }
+    "psm": {"enabled": true, "region": "spaces"},
+    "opc": {"enabled": true, "mask_bias_nm": 40.0}
   }
 }
+
 
 

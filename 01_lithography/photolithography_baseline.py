@@ -87,6 +87,9 @@ DX_NM = 2.0                    # pixel size
 SIM_PITCHES = 3                # simulate multiple pitches
 PAD_FACTOR = 2                 # FFT padding factor
 
+# --- Output folder ---
+OUTPUT_DIR = "outputs/stage_0_baseline"
+
 
 # =========================
 # 1) Utilities
@@ -644,7 +647,14 @@ def simulate_one(dose_rel: float, defocus_nm: float, seed: int = 0) -> dict:
 # 7) Plots / outputs
 # =========================
 
+def _ensure_output_dir():
+    """Create output directory if it doesn't exist."""
+    import os
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 def plot_demo_case():
+    import os
+    _ensure_output_dir()
     r = simulate_one(dose_rel=DOSE0, defocus_nm=0.0, seed=1)
 
     if PATTERN == "line_space_1d":
@@ -659,13 +669,22 @@ def plot_demo_case():
                   f"| Dose={DOSE0:.2f}, Defocus=0 nm | CD≈{r['cd_nm']:.1f} nm")
         plt.legend()
         plt.grid(True, which="both")
-        plt.show()
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUTPUT_DIR, "demo_1d_mask_image_resist.png"), dpi=200)
+        plt.close()
     else:
-        plt.figure(); plt.imshow(r["mask"], origin="lower"); plt.title("Mask (2D)"); plt.colorbar(); plt.show()
-        plt.figure(); plt.imshow(r["I"], origin="lower"); plt.title("Aerial image (2D, normalized)"); plt.colorbar(); plt.show()
-        plt.figure(); plt.imshow(r["R"], origin="lower"); plt.title(f"Resist remain (2D, binary) | CD≈{r['cd_nm']:.1f} nm(eq)"); plt.colorbar(); plt.show()
+        plt.figure(); plt.imshow(r["mask"], origin="lower"); plt.title("Mask (2D)"); plt.colorbar(); plt.tight_layout(); plt.savefig(os.path.join(OUTPUT_DIR, "demo_2d_mask.png"), dpi=200); plt.close()
+        plt.figure(); plt.imshow(r["I"], origin="lower"); plt.title("Aerial image (2D, normalized)"); plt.colorbar(); plt.tight_layout(); plt.savefig(os.path.join(OUTPUT_DIR, "demo_2d_aerial.png"), dpi=200); plt.close()
+        plt.figure(); plt.imshow(r["R"], origin="lower"); plt.title(f"Resist remain (2D, binary) | CD≈{r['cd_nm']:.1f} nm(eq)"); plt.colorbar(); plt.tight_layout(); plt.savefig(os.path.join(OUTPUT_DIR, "demo_2d_resist.png"), dpi=200); plt.close()
+        if "cd_fit_nm" in r and r["cd_fit_nm"] is not None:
+            plt.figure(); plt.imshow(r["R"], origin="lower"); plt.title(f"Demo 2D Resist + Fitted Circle | CD_fit≈{r['cd_fit_nm']:.1f} nm"); plt.colorbar(); plt.tight_layout(); plt.savefig(os.path.join(OUTPUT_DIR, "demo_2d_resist_circlefit.png"), dpi=200); plt.close()
+    
+    np.save(os.path.join(OUTPUT_DIR, "resist.npy"), r["R"].astype(np.uint8))
 
 def process_window():
+    import os
+    import json
+    _ensure_output_dir()
     cds = np.zeros((len(DEFOCUS_LIST_NM), len(DOSE_LIST)), dtype=float)
     for i, f in enumerate(DEFOCUS_LIST_NM):
         for j, d in enumerate(DOSE_LIST):
@@ -682,7 +701,9 @@ def process_window():
               f"λ={WAVELENGTH_NM:.0f}nm NA={NA:.2f} σ=[{SIGMA_IN:.2f},{SIGMA_OUT:.2f}] "
               f"PEB blur={PEB_BLUR_NM:.0f}nm")
     plt.colorbar(label="Pass(1)/Fail(0)")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "process_window.png"), dpi=200)
+    plt.close()
 
     # Slices
     f0 = int(np.argmin(np.abs(DEFOCUS_LIST_NM - 0.0)))
@@ -696,7 +717,9 @@ def process_window():
     plt.ylabel("CD (nm)")
     plt.title("CD vs Dose @ Defocus≈0")
     plt.grid(True, which="both")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "cd_vs_dose.png"), dpi=200)
+    plt.close()
 
     plt.figure()
     plt.plot(DEFOCUS_LIST_NM, cds[:, d0])
@@ -706,16 +729,37 @@ def process_window():
     plt.ylabel("CD (nm)")
     plt.title(f"CD vs Defocus @ Dose≈{DOSE0:.2f}")
     plt.grid(True, which="both")
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "cd_vs_defocus.png"), dpi=200)
+    plt.close()
 
+    # Save metrics to JSON (match existing format)
+    metrics = {
+        "window_area_dose_nm": 0.0,
+        "target_cd_nm": float(TARGET_CD_NM),
+        "cd_tol_nm": float(CD_TOL_NM),
+        "pattern": str(PATTERN),
+        "wavelength_nm": float(WAVELENGTH_NM),
+        "na": float(NA),
+        "sigma_in": float(SIGMA_IN),
+        "sigma_out": float(SIGMA_OUT),
+        "peb_blur_nm": float(PEB_BLUR_NM)
+    }
+    
     if np.any(pass_map):
         err = np.abs(cds - TARGET_CD_NM)
         err_masked = np.where(pass_map, err, np.inf)
         bi, bj = np.unravel_index(np.argmin(err_masked), err_masked.shape)
-        print(f"[Suggested center point] Dose={DOSE_LIST[bj]:.3f}, Defocus={DEFOCUS_LIST_NM[bi]:.1f} nm "
-              f"(CD≈{cds[bi,bj]:.2f} nm)")
+        best_dose = float(DOSE_LIST[bj])
+        best_defocus = float(DEFOCUS_LIST_NM[bi])
+        best_cd = float(cds[bi,bj])
+        print(f"[Suggested center point] Dose={best_dose:.3f}, Defocus={best_defocus:.1f} nm "
+              f"(CD≈{best_cd:.2f} nm)")
     else:
         print("[No pass region] Try adjusting PEB_BLUR_NM, DEVELOP_THRESHOLD, NA, σ, or target/tolerance.")
+    
+    with open(os.path.join(OUTPUT_DIR, "metrics.json"), "w") as f:
+        json.dump(metrics, f, indent=2)
 
 
 if __name__ == "__main__":

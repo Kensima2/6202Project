@@ -8,7 +8,7 @@ Usage:
 """
 
 from __future__ import annotations
-import argparse, json, os
+import argparse, json, os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -20,6 +20,12 @@ import smo
 import mask_import
 from PIL import Image
 from metrics import window_area
+
+
+def reset_output_dir(outdir: str) -> None:
+    if os.path.isdir(outdir):
+        shutil.rmtree(outdir)
+    os.makedirs(outdir, exist_ok=True)
 
 def main(cfg_path: str, outdir_override: str | None = None):
     cfg = json.load(open(cfg_path, "r", encoding="utf-8"))
@@ -71,37 +77,35 @@ def main(cfg_path: str, outdir_override: str | None = None):
     else:
         outdir = os.path.join("outputs", "stage1_poly_litho")
 
-    os.makedirs(outdir, exist_ok=True)
+    reset_output_dir(outdir)
 
-    # 0.2) Optional: KLayout mask pipeline (PNG -> NPY -> 2D simulation)
-    # If enabled, this converts a KLayout-exported PNG into a numpy mask and injects it into the simulator
-    # for 2D (contact or arbitrary) simulations. 1D flow remains unchanged.
-    km = cfg.get("klayout_mask", {})
-    if bool(km.get("enabled", False)) and bool(km.get("auto_convert_on_run", True)):
-        png_path = str(km.get("png_path", "masks/klayout_mask.png"))
-        out_npy = str(km.get("out_npy_path", "masks/custom_mask.npy"))
-        if os.path.exists(png_path):
-            img = np.array(Image.open(png_path).convert("RGBA"))[:, :, :3]
-            m = mask_import.png_to_mask_npy(
-                img,
-                out_n=int(km.get("size", 512)),
-                threshold=float(km.get("threshold", 0.5)),
-                invert=bool(km.get("invert", False)),
-            )
-            os.makedirs(os.path.dirname(out_npy) or ".", exist_ok=True)
-            np.save(out_npy, m)
-            # Inject into baseline for 2D pattern runs only (keeps 1D intact)
-            if cfg.get("pattern", "line_space_1d") != "line_space_1d":
-                litho.CUSTOM_MASK_PATH = out_npy
-            # Export a quick visualization
-            plt.figure()
-            plt.imshow(m, origin="lower")
-            plt.title("Imported KLayout mask (binary)")
-            plt.tight_layout()
-            plt.savefig(os.path.join(outdir, "klayout_mask_import_preview.png"), dpi=200)
-            plt.close()
-        else:
-            print(f"[WARN] KLayout PNG not found: {png_path}. Disable klayout_mask or provide the file.")
+    # # 0.2) Optional: KLayout mask pipeline (PNG -> NPY -> 2D simulation) [COMMENTED OUT - using 1D only]
+    # km = cfg.get("klayout_mask", {})
+    # if bool(km.get("enabled", False)) and bool(km.get("auto_convert_on_run", True)):
+    #     png_path = str(km.get("png_path", "masks/klayout_mask.png"))
+    #     out_npy = str(km.get("out_npy_path", "masks/custom_mask.npy"))
+    #     if os.path.exists(png_path):
+    #         img = np.array(Image.open(png_path).convert("RGBA"))[:, :, :3]
+    #         m = mask_import.png_to_mask_npy(
+    #             img,
+    #             out_n=int(km.get("size", 512)),
+    #             threshold=float(km.get("threshold", 0.5)),
+    #             invert=bool(km.get("invert", False)),
+    #         )
+    #         os.makedirs(os.path.dirname(out_npy) or ".", exist_ok=True)
+    #         np.save(out_npy, m)
+    #         # Inject into baseline for 2D pattern runs only (keeps 1D intact)
+    #         if cfg.get("pattern", "line_space_1d") != "line_space_1d":
+    #             litho.CUSTOM_MASK_PATH = out_npy
+    #         # Export a quick visualization
+    #         plt.figure()
+    #         plt.imshow(m, origin="lower")
+    #         plt.title("Imported KLayout mask (binary)")
+    #         plt.tight_layout()
+    #         plt.savefig(os.path.join(outdir, "klayout_mask_import_preview.png"), dpi=200)
+    #         plt.close()
+    #     else:
+    #         print(f"[WARN] KLayout PNG not found: {png_path}. Disable klayout_mask or provide the file.")
 
     # 0.5) Spin-coating (photoresist thickness) simulation + coupling to litho
     # This connects Photolithography II (process flow) to litho window: thickness -> PEB/threshold sensitivity.
@@ -229,45 +233,44 @@ def main(cfg_path: str, outdir_override: str | None = None):
     np.save(os.path.join(outdir, "resist.npy"), resist_out)
     # ============================================
 
-    # ---- 2D demo (contact) ----
-    litho.PATTERN = "contact_2d"
-    r2 = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=1)
-    for name, img in [("mask", r2["mask"]), ("aerial", r2["I"]), ("resist", r2["R"])]:
-        plt.figure()
-        plt.imshow(img, origin="lower")
-        if name == "resist":
-            plt.title(f"Demo 2D (Contact) - {name} | CD(circle-eq)≈{r2['cd_nm']:.1f} nm")
-        else:
-            plt.title(f"Demo 2D (Contact) - {name}")
-        plt.colorbar()
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, f"demo_2d_{name}.png"), dpi=200)
-        plt.close()
+    # # ---- 2D demo (contact) [COMMENTED OUT - using 1D only] ----
+    # litho.PATTERN = "contact_2d"
+    # r2 = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=1)
+    # for name, img in [("mask", r2["mask"]), ("aerial", r2["I"]), ("resist", r2["R"])]:
+    #     plt.figure()
+    #     plt.imshow(img, origin="lower")
+    #     if name == "resist":
+    #         plt.title(f"Demo 2D (Contact) - {name} | CD(circle-eq)≈{r2['cd_nm']:.1f} nm")
+    #     else:
+    #         plt.title(f"Demo 2D (Contact) - {name}")
+    #     plt.colorbar()
+    #     plt.tight_layout()
+    #     plt.savefig(os.path.join(outdir, f"demo_2d_{name}.png"), dpi=200)
+    #     plt.close()
 
+    # # Optional overlay: fitted circle on resist (2D contact) for visual inspection
+    # if r2.get("cd_fit_nm") is not None:
+    #     dx = float(r2["x_nm"][1] - r2["x_nm"][0])
+    #     dy = dx  # square pixels in our setup
+    #     cd_fit = float(r2["cd_fit_nm"])
+    #     cx_nm, cy_nm = r2.get("circle_center_nm", [0.0, 0.0])
+    #     r_nm = cd_fit / 2.0
 
-    # Optional overlay: fitted circle on resist (2D contact) for visual inspection
-    if r2.get("cd_fit_nm") is not None:
-        dx = float(r2["x_nm"][1] - r2["x_nm"][0])
-        dy = dx  # square pixels in our setup
-        cd_fit = float(r2["cd_fit_nm"])
-        cx_nm, cy_nm = r2.get("circle_center_nm", [0.0, 0.0])
-        r_nm = cd_fit / 2.0
+    #     # Build local coordinate axes in nm for the image
+    #     ny, nx = r2["R"].shape
+    #     xs = (np.arange(nx) - nx/2.0) * dx
+    #     ys = (np.arange(ny) - ny/2.0) * dy
+    #     X, Y = np.meshgrid(xs, ys)
 
-        # Build local coordinate axes in nm for the image
-        ny, nx = r2["R"].shape
-        xs = (np.arange(nx) - nx/2.0) * dx
-        ys = (np.arange(ny) - ny/2.0) * dy
-        X, Y = np.meshgrid(xs, ys)
-
-        # Circle mask for overlay
-        circle = (X - cx_nm)**2 + (Y - cy_nm)**2
-        plt.figure()
-        plt.imshow(r2["R"], origin="lower")
-        plt.contour(circle, levels=[r_nm**2], colors="w", linewidths=1.2)
-        plt.title(f"Demo 2D Resist + Fitted Circle | CD_fit≈{cd_fit:.1f} nm, center=({cx_nm:.1f},{cy_nm:.1f}) nm")
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, "demo_2d_resist_circlefit.png"), dpi=200)
-        plt.close()
+    #     # Circle mask for overlay
+    #     circle = (X - cx_nm)**2 + (Y - cy_nm)**2
+    #     plt.figure()
+    #     plt.imshow(r2["R"], origin="lower")
+    #     plt.contour(circle, levels=[r_nm**2], colors="w", linewidths=1.2)
+    #     plt.title(f"Demo 2D Resist + Fitted Circle | CD_fit≈{cd_fit:.1f} nm, center=({cx_nm:.1f},{cy_nm:.1f}) nm")
+    #     plt.tight_layout()
+    #     plt.savefig(os.path.join(outdir, "demo_2d_resist_circlefit.png"), dpi=200)
+    #     plt.close()
     litho.PATTERN = _pattern_cfg
 
 
@@ -328,50 +331,50 @@ def main(cfg_path: str, outdir_override: str | None = None):
 
         litho.OPC_MASK_BIAS_NM = _b
 
-    # 1.6) SMO (source-mask optimization) demonstration (optional)
-    # We do a grid-search over sigma_out and mask_bias_nm and plot window area heatmap.
-    smo_cfg = ret.get("smo", {})
-    if bool(smo_cfg.get("enabled", False)):
-        sigma_out_list = np.array(smo_cfg.get("sigma_out_list", [0.3, 0.5, 0.7, 0.9]), dtype=float)
-        bias_nm_list = np.array(smo_cfg.get("bias_nm_list", [-40, -20, 0, 20, 40]), dtype=float)
-        sigma_in = float(smo_cfg.get("sigma_in", litho.SIGMA_IN))
+    # # 1.6) SMO (source-mask optimization) demonstration (optional) [COMMENTED OUT - using 1D only]
+    # smo_cfg = ret.get("smo", {})
+    # if bool(smo_cfg.get("enabled", False)):
+    #     sigma_out_list = np.array(smo_cfg.get("sigma_out_list", [0.3, 0.5, 0.7, 0.9]), dtype=float)
+    #     bias_nm_list = np.array(smo_cfg.get("bias_nm_list", [-40, -20, 0, 20, 40]), dtype=float)
+    #     sigma_in = float(smo_cfg.get("sigma_in", litho.SIGMA_IN))
 
-        # define evaluator for window area with current cfg sweeps
-        def eval_area(si, so, bias_nm):
-            # set params
-            litho.SIGMA_IN = float(si)
-            litho.SIGMA_OUT = float(so)
-            litho.OPC_MASK_BIAS_NM = float(bias_nm)
+    #     # define evaluator for window area with current cfg sweeps
+    #     def eval_area(si, so, bias_nm):
+    #         # set params
+    #         litho.SIGMA_IN = float(si)
+    #         litho.SIGMA_OUT = float(so)
+    #         litho.OPC_MASK_BIAS_NM = float(bias_nm)
 
-            # compute pass map quickly
-            cds = np.zeros((len(litho.DEFOCUS_LIST_NM), len(litho.DOSE_LIST)), dtype=float)
-            for ii, f in enumerate(litho.DEFOCUS_LIST_NM):
-                for jj, d in enumerate(litho.DOSE_LIST):
-                    cds[ii, jj] = litho.simulate_one(dose_rel=float(d), defocus_nm=float(f), seed=0)["cd_nm"]
-            pass_map = np.abs(cds - litho.TARGET_CD_NM) <= litho.CD_TOL_NM
-            # window area metric
-            dd = float(litho.DOSE_LIST[1] - litho.DOSE_LIST[0])
-            df = float(litho.DEFOCUS_LIST_NM[1] - litho.DEFOCUS_LIST_NM[0])
-            return float(pass_map.sum()) * dd * df
+    #         # compute pass map quickly
+    #         cds = np.zeros((len(litho.DEFOCUS_LIST_NM), len(litho.DOSE_LIST)), dtype=float)
+    #         for ii, f in enumerate(litho.DEFOCUS_LIST_NM):
+    #             for jj, d in enumerate(litho.DOSE_LIST):
+    #                 cds[ii, jj] = litho.simulate_one(dose_rel=float(d), defocus_nm=float(f), seed=0)["cd_nm"]
+    #         pass_map = np.abs(cds - litho.TARGET_CD_NM) <= litho.CD_TOL_NM
+    #         # window area metric
+    #         dd = float(litho.DOSE_LIST[1] - litho.DOSE_LIST[0])
+    #         df = float(litho.DEFOCUS_LIST_NM[1] - litho.DEFOCUS_LIST_NM[0])
+    #         return float(pass_map.sum()) * dd * df
 
-        res = smo.grid_search_smo(eval_area, sigma_out_list=sigma_out_list, bias_nm_list=bias_nm_list, sigma_in=sigma_in)
-        scores = res["scores"]
+    #     res = smo.grid_search_smo(eval_area, sigma_out_list=sigma_out_list, bias_nm_list=bias_nm_list, sigma_in=sigma_in)
+    #     scores = res["scores"]
 
-        plt.figure()
-        plt.imshow(scores, origin="lower", aspect="auto",
-                   extent=[bias_nm_list.min(), bias_nm_list.max(), sigma_out_list.min(), sigma_out_list.max()])
-        plt.xlabel("Mask bias (nm)")
-        plt.ylabel("Sigma_out")
-        plt.title(f"SMO demo: window area heatmap | best so={res['best_sigma_out']}, bias={res['best_bias_nm']}")
-        plt.colorbar(label="Window area (dose·nm)")
-        plt.tight_layout()
-        plt.savefig(os.path.join(outdir, "ret_smo_window_area_heatmap.png"), dpi=200)
-        plt.close()
+    #     plt.figure()
+    #     plt.imshow(scores, origin="lower", aspect="auto",
+    #                extent=[bias_nm_list.min(), bias_nm_list.max(), sigma_out_list.min(), sigma_out_list.max()])
+    #     plt.xlabel("Mask bias (nm)")
+    #     plt.ylabel("Sigma_out")
+    #     plt.title(f"SMO demo: window area heatmap | best so={res['best_sigma_out']}, bias={res['best_bias_nm']}")
+    #     plt.colorbar(label="Window area (dose·nm)")
+    #     plt.tight_layout()
+    #     plt.savefig(os.path.join(outdir, "ret_smo_window_area_heatmap.png"), dpi=200)
+    #     plt.close()
 
-        # restore to config settings after SMO demo
-        litho.SIGMA_IN = float(cfg["sigma_in"])
-        litho.SIGMA_OUT = float(cfg["sigma_out"])
-        litho.OPC_MASK_BIAS_NM = float(opc_cfg.get("mask_bias_nm", 0.0)) if bool(opc_cfg.get("enabled", False)) else 0.0
+    #     # restore to config settings after SMO demo
+    #     litho.SIGMA_IN = float(cfg["sigma_in"])
+    #     litho.SIGMA_OUT = float(cfg["sigma_out"])
+    #     litho.OPC_MASK_BIAS_NM = float(opc_cfg.get("mask_bias_nm", 0.0)) if bool(opc_cfg.get("enabled", False)) else 0.0
+    
     # 2) Process window sweep
     dose = litho.DOSE_LIST
     defocus = litho.DEFOCUS_LIST_NM
@@ -430,13 +433,13 @@ def main(cfg_path: str, outdir_override: str | None = None):
         "peb_blur_nm": litho.PEB_BLUR_NM
     }
 
-    # Extra contact (2D) metrics at the nominal center condition (dose0, defocus0) if available
-    r_center = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=2)
-    for k in ["cd_fit_nm", "cd_area_circle_nm", "circle_center_nm",
-              "epe_mean_nm", "epe_std_nm", "epe_maxabs_nm",
-              "nils2d_median_1_per_nm", "cdu_cd_mean_nm", "cdu_cd_std_nm"]:
-        if k in r_center and r_center[k] is not None:
-            metrics[k] = r_center[k]
+    # Extra contact (2D) metrics at the nominal center condition (dose0, defocus0) if available [COMMENTED OUT - using 1D only]
+    # r_center = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=2)
+    # for k in ["cd_fit_nm", "cd_area_circle_nm", "circle_center_nm",
+    #           "epe_mean_nm", "epe_std_nm", "epe_maxabs_nm",
+    #           "nils2d_median_1_per_nm", "cdu_cd_mean_nm", "cdu_cd_std_nm"]:
+    #     if k in r_center and r_center[k] is not None:
+    #         metrics[k] = r_center[k]
 
     # Record spin-coating and coupled effective knobs (if enabled)
     if cfg.get("_spin_results") is not None:

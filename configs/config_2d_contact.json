@@ -45,12 +45,12 @@
   },
   "ret": {
     "psm": {
-      "enabled": false,
+      "enabled": true,
       "phase_rad": 3.14159,
       "region": "spaces"
     },
     "opc": {
-      "enabled": false,
+      "enabled": true,
       "mask_bias_nm": 0.0,
       "notes": "1D uses bias->duty. 2D uses morphology dilate/erode."
     },
