@@ -7,5 +7,6 @@
   "na": 0.93,
   "sigma_in": 0.0,
   "sigma_out": 0.5,
-  "peb_blur_nm": 5.0
+  "peb_blur_nm": 5.0,
+  "resist_contrast_gamma": 20.0
 }

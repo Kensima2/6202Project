@@ -42,6 +42,7 @@ def main(cfg_path: str, outdir_override: str | None = None):
     litho.RESIST_TYPE = cfg["resist_type"]
     litho.DEVELOP_THRESHOLD = float(cfg["develop_threshold"])
     litho.PEB_BLUR_NM = float(cfg["peb_blur_nm"])
+    litho.RESIST_CONTRAST_GAMMA = float(cfg.get("resist_contrast_gamma", 0.0))
 
     litho.WAVELENGTH_NM = float(cfg["wavelength_nm"])
     litho.NA = float(cfg["na"])
@@ -331,6 +332,26 @@ def main(cfg_path: str, outdir_override: str | None = None):
 
         litho.OPC_MASK_BIAS_NM = _b
 
+    # --- Resist contrast curve comparison (1D): hard threshold vs sigmoid ---
+    if litho.RESIST_CONTRAST_GAMMA > 0 and litho.PATTERN == "line_space_1d":
+        _gamma = litho.RESIST_CONTRAST_GAMMA
+        # Hard threshold (gamma=0)
+        litho.RESIST_CONTRAST_GAMMA = 0.0
+        r_hard = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=12)
+        # Sigmoid contrast
+        litho.RESIST_CONTRAST_GAMMA = _gamma
+        r_sig = litho.simulate_one(dose_rel=float(cfg.get("dose0", 1.0)), defocus_nm=0.0, seed=12)
+
+        x = r_hard["x_nm"]
+        plt.figure()
+        plt.plot(x, r_hard["R"][0], label=f"Hard threshold CD≈{r_hard['cd_nm']:.1f}nm")
+        plt.plot(x, r_sig["R"][0], label=f"Sigmoid (γ={_gamma:.0f}) CD≈{r_sig['cd_nm']:.1f}nm")
+        plt.xlabel("x (nm)"); plt.ylabel("Resist remain (binary)")
+        plt.title("Resist model comparison (1D): hard threshold vs sigmoid contrast")
+        plt.grid(True, which="both"); plt.legend(); plt.tight_layout()
+        plt.savefig(os.path.join(outdir, "resist_contrast_compare_1d.png"), dpi=200)
+        plt.close()
+
     # # 1.6) SMO (source-mask optimization) demonstration (optional) [COMMENTED OUT - using 1D only]
     # smo_cfg = ret.get("smo", {})
     # if bool(smo_cfg.get("enabled", False)):
@@ -430,7 +451,8 @@ def main(cfg_path: str, outdir_override: str | None = None):
         "na": litho.NA,
         "sigma_in": litho.SIGMA_IN,
         "sigma_out": litho.SIGMA_OUT,
-        "peb_blur_nm": litho.PEB_BLUR_NM
+        "peb_blur_nm": litho.PEB_BLUR_NM,
+        "resist_contrast_gamma": litho.RESIST_CONTRAST_GAMMA
     }
 
     # Extra contact (2D) metrics at the nominal center condition (dose0, defocus0) if available [COMMENTED OUT - using 1D only]

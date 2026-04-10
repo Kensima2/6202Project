@@ -81,6 +81,7 @@ DOSE0 = 1.0
 DEVELOP_THRESHOLD = 0.5        # threshold after normalization (0~1)
 PEB_BLUR_NM = 18.0             # diffusion-length proxy (larger => more blur)
 POST_DEV_BIAS_NM = 0.0         # optional simple bias
+RESIST_CONTRAST_GAMMA = 0.0    # sigmoid contrast curve steepness; 0 = hard threshold (baseline)
 
 # --- Numerical grid ---
 DX_NM = 2.0                    # pixel size
@@ -218,17 +219,35 @@ def aerial_image_scalar_partial(mask: np.ndarray, dx_nm: float,
 # =========================
 
 def develop(intensity01: np.ndarray, dose_rel: float, thr: float,
-            resist_type: str, peb_blur_nm: float, dx_nm: float) -> np.ndarray:
+            resist_type: str, peb_blur_nm: float, dx_nm: float,
+            gamma: float = 0.0) -> np.ndarray:
     """
-    Simplified resist:
+    Resist development model:
     - dose scales intensity
     - PEB blur modeled as Gaussian blur on intensity
-    - threshold -> binary resist remain
+    - gamma > 0: sigmoid contrast curve (smooth transition at threshold)
+    - gamma == 0: hard threshold (baseline behavior)
+
+    Sigmoid model:  remaining_fraction = 1 / (1 + exp(gamma * (I - thr)))
+    for positive resist (high intensity -> removed).
     """
     I = np.clip(intensity01 * dose_rel, 0.0, 1.0)
     I = gaussian_blur_fft(I, sigma_nm=peb_blur_nm, dx_nm=dx_nm)
     I = normalize01(I)
 
+    if gamma > 0:
+        # Sigmoid contrast curve: smooth transition around threshold
+        if resist_type == "positive":
+            # High intensity -> low remaining fraction (resist removed)
+            remain = 1.0 / (1.0 + np.exp(gamma * (I - thr)))
+        elif resist_type == "negative":
+            # High intensity -> high remaining fraction (resist stays)
+            remain = 1.0 / (1.0 + np.exp(-gamma * (I - thr)))
+        else:
+            raise ValueError("resist_type must be 'positive' or 'negative'")
+        return (remain > 0.5).astype(int)
+
+    # Hard threshold (baseline)
     if resist_type == "positive":
         return (I < thr).astype(int)
     if resist_type == "negative":
@@ -615,7 +634,8 @@ def simulate_one(dose_rel: float, defocus_nm: float, seed: int = 0) -> dict:
     I = crop_center(I_p, mask.shape[0], mask.shape[1])
 
     R = develop(I, dose_rel=dose_rel, thr=DEVELOP_THRESHOLD,
-                resist_type=RESIST_TYPE, peb_blur_nm=PEB_BLUR_NM, dx_nm=DX_NM)
+                resist_type=RESIST_TYPE, peb_blur_nm=PEB_BLUR_NM, dx_nm=DX_NM,
+                gamma=RESIST_CONTRAST_GAMMA)
 
     extra = {}
     if PATTERN == "line_space_1d":
