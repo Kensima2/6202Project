@@ -1,0 +1,13 @@
+{
+  "Leff_nm": 180.0,
+  "xj_nm": 10.675145575867225,
+  "Neff_N_proxy": 184.21214234357674,
+  "Neff_P_proxy": 184.21214234357674,
+  "activation_proxy": 0.8060576689141951,
+  "dx_nm": 10.0,
+  "areas": {
+    "active_px": 49860,
+    "nplus_px": 26332,
+    "pplus_px": 13703
+  }
+}

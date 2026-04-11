@@ -1,0 +1,15 @@
+{
+  "open_area": 0.7666666507720947,
+  "pixel_um": 0.02,
+  "base_rate_Apm": 5500.0,
+  "avg_rate_Apm": 1320.163330078125,
+  "film_thickness_A": 3000.0,
+  "main_time_min": 2.272446091819915,
+  "overetch_time_min": 0.16986534536353864,
+  "anisotropy_index": 0.9351567356608026,
+  "pressure_mTorr": 12.0,
+  "rf_power_W": 500.0,
+  "magnetic_field_mT": 50.0,
+  "lateral_bias_um": 0.01621081608479935,
+  "min_selectivity_req": 39.0
+}
