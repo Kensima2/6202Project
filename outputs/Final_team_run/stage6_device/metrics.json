@@ -1,0 +1,12 @@
+{
+  "Leff_nm": 167.5783678304013,
+  "lateral_bias_nm": 16.21081608479935,
+  "tox_nm": 2.5,
+  "Na_proxy_peak_cm3": 2.691755255569959e+20,
+  "sheet_R_ohm_per_sq": 17.46014506594464,
+  "cu_mean_um": 0.24545198678970337,
+  "Vt_proxy_V": 0.8695660589721995,
+  "Ioff_proxy_A": 5.936818397811123e-06,
+  "Ron_proxy_ohm": 2.438285510194198,
+  "interconnect_R_proxy_ohm": 6.925998123846983
+}

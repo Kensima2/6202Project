@@ -1,6 +1,0 @@
-{
-  "poly_summary": "/workspaces/6202Project/outputs/20260410_132451_team_run/stage1_poly_litho/poly_summary.json",
-  "device_inputs": "/workspaces/6202Project/outputs/20260410_132451_team_run/stage4_implant_thermal/device_inputs.json",
-  "metal_metrics": "/workspaces/6202Project/outputs/20260410_132451_team_run/stage5_metallization_cmp/metrics_stage5.json",
-  "device_metrics": "/workspaces/6202Project/outputs/20260410_132451_team_run/stage6_device/metrics_stage6.json"
-}
