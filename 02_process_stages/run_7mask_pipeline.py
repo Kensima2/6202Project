@@ -95,21 +95,15 @@ def main():
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parents[1]
-    run_name = datetime.now().strftime("%Y%m%d_%H%M%S") + "_team_run"
-    outroot = root / "outputs" / run_name
-    outroot.mkdir(parents=True, exist_ok=True)
     flow = load_json((root/args.flow).resolve())
 
     dx_nm = float(flow["stage_params"]["dx_nm"])
 
-    ts = time.strftime("%Y%m%d_%H%M%S")
-    outroot = root/"outputs"/f"{ts}_{args.runname}"
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    outroot = root / "outputs" / f"{ts}_{args.runname}"
     outroot.mkdir(parents=True, exist_ok=True)
 
     ensure_masks(flow, root)
-
-    outroot = root / "outputs" / run_name
-    outroot.mkdir(parents=True, exist_ok=True)
 
     # ===== 明确声明所有 stage 输出目录 =====
     poly_out = outroot / "stage1_poly_litho"
@@ -149,13 +143,6 @@ def main():
     poly_out.mkdir(exist_ok=True)
     poly_summary = run_poly_litho(root, flow, poly_out)
 
-    # Save prepared masks to tmp
-    tmp = outroot/"_tmp_masks"; tmp.mkdir(exist_ok=True)
-    for n in ["ACTIVE","NIMP","PIMP","CONT","M1","V1"]:
-        np.save(tmp/f"{n}.npy", prepared[n])
-
-    # poly_out / "resist.npy"  # TODO: unclear purpose, likely dead code
-
     # Stage2 etch
     s2p = flow["stage_params"]["etch"]
     s2_out = outroot / "stage2_etch"
@@ -172,40 +159,62 @@ def main():
         "--magnetic_field_mT", str(s2p.get("magnetic_field_mT", 50.0)),
     ], cwd=root / "02_process_stages")
 
-    # Stage4 implant+thermal
-    s4p = flow["stage_params"]["implant_thermal"]
-    s4_out = outroot/"stage4_implant_thermal"
+    # Stage3 CVD (aligned to notebook one-by-one chain)
+    s3p = flow["stage_params"].get("cvd", {})
+    s3_out = outroot / "stage3_cvd"
+    s3_out.mkdir(parents=True, exist_ok=True)
+    s2_summary = load_json(s2_out / "summary.json")
+    trench_depth_um = float(s2_summary.get("film_thickness_A", 3000.0)) / 10000.0
     run_cmd([
-        "python","stage4_implant_thermal_multimask.py",
-        "--active_npy", str(tmp/"ACTIVE.npy"),
-        "--nimp_npy", str(tmp/"NIMP.npy"),
-        "--pimp_npy", str(tmp/"PIMP.npy"),
-        "--poly_summary_json", str(poly_summary),
-        "--outdir", str(s4_out),
-        "--dx_nm", str(dx_nm),
-        "--implant_dose_cm2", str(s4p["implant_dose_cm2"]),
-        "--implant_energy_keV", str(s4p["implant_energy_keV"]),
-        "--tilt_deg", str(s4p["tilt_deg"]),
-        "--channeling", str(int(bool(s4p["channeling"]))),
-        "--screen_oxide_nm", str(s4p["screen_oxide_nm"]),
-        "--anneal_mode", str(s4p["anneal_mode"]),
-        "--T_C", str(s4p["T_C"]),
-        "--t_s", str(s4p["t_s"]),
-    ], cwd=root/"02_process_stages")
+        "python", "stage3_cvd.py",
+        "--openings", str(s2_out / "etched_openings.npy"),
+        "--outdir", str(s3_out),
+        "--pixel_um", str(s3p.get("pixel_um", 0.02)),
+        "--trench_depth_um", str(s3p.get("trench_depth_um", trench_depth_um)),
+        "--target_thickness_um", str(s3p.get("target_thickness_um", 0.5)),
+        "--conformality", str(s3p.get("conformality", 0.95)),
+        "--regime", str(s3p.get("regime", "mass_transport")),
+        "--temperature_C", str(s3p.get("temperature_C", 400.0)),
+        "--hdp_cycles", str(s3p.get("hdp_cycles", 0)),
+        "--hdp_sputter_frac", str(s3p.get("hdp_sputter_frac", 0.25)),
+    ], cwd=root / "02_process_stages")
 
-    # Stage5 metallization+CMP
+    # Stage4 implant+thermal (standalone model, aligned to notebook)
+    s4p = flow["stage_params"]["implant_thermal"]
+    s4_out = outroot / "stage4_implant_thermal"
+    s4_cmd = [
+        "python", "stage4_thermal_implant.py",
+        "--outdir", str(s4_out),
+        "--dopant", str(s4p.get("dopant", "B")),
+        "--dose_cm2", str(s4p.get("implant_dose_cm2", 2e15)),
+        "--energy_keV", str(s4p.get("implant_energy_keV", 4.0)),
+        "--anneal_method", str(s4p.get("anneal_method", "rta")),
+        "--anneal_T_C", str(s4p.get("T_C", 1050.0)),
+        "--anneal_time_s", str(s4p.get("t_s", 10.0)),
+        "--tilt_deg", str(s4p.get("tilt_deg", 7.0)),
+        "--screen_oxide_nm", str(s4p.get("screen_oxide_nm", 10.0)),
+    ]
+    if bool(s4p.get("channeling", True)):
+        s4_cmd.append("--channeling")
+    if bool(s4p.get("pre_amorphous", True)):
+        s4_cmd.append("--pre_amorphous")
+    run_cmd(s4_cmd, cwd=root / "02_process_stages")
+
+    # Stage5 metallization+CMP (standalone model, aligned to notebook)
     s5p = flow["stage_params"]["met_cmp"]
-    s5_out = outroot/"stage5_metallization_cmp"
+    s5_out = outroot / "stage5_metallization_cmp"
     run_cmd([
-        "python","stage5_metallization_cmp_multimask.py",
-        "--cont_npy", str(tmp/"CONT.npy"),
-        "--m1_npy", str(tmp/"M1.npy"),
-        "--v1_npy", str(tmp/"V1.npy"),
+        "python", "stage5_metallization_cmp.py",
+        "--depth_map", str(s3_out / "depth_map_um.npy"),
+        "--features", str(s2_out / "etched_openings.npy"),
         "--outdir", str(s5_out),
-        "--overburden_nm", str(s5p["overburden_nm"]),
-        "--target_overburden_nm", str(s5p["target_overburden_nm"]),
-        "--pattern_density_window", str(s5p["pattern_density_window"]),
-    ], cwd=root/"02_process_stages")
+        "--barrier_nm", str(s5p.get("barrier_nm", 10.0)),
+        "--seed_nm", str(s5p.get("seed_nm", 50.0)),
+        "--overburden_um", str(s5p.get("overburden_um", 0.8)),
+        "--cmp_target_overburden_um", str(s5p.get("cmp_target_overburden_um", 0.12)),
+        "--dishing_strength_um", str(s5p.get("dishing_strength_um", 0.05)),
+        "--erosion_strength_um", str(s5p.get("erosion_strength_um", 0.02)),
+    ], cwd=root / "02_process_stages")
 
     # Stage6 device
     s6p = flow["stage_params"]["device"]
@@ -214,18 +223,22 @@ def main():
     run_cmd([
         "python", "stage6_device.py",
         "--etch_summary", str(s2_out / "summary.json"),
-        "--implant_metrics", str(s4_out / "metrics_stage4.json"),
-        "--cmp_metrics", str(s5_out / "metrics_stage5.json"),
+        "--implant_metrics", str(s4_out / "metrics.json"),
+        "--cmp_metrics", str(s5_out / "metrics.json"),
         "--outdir", str(s6_out),
+        "--cd_nom_nm", str(s6p.get("cd_nom_nm", 200.0)),
         "--tox_nm", str(s6p.get("tox_nm", 2.0)),
+        "--temp_C", str(s6p.get("temp_C", 25.0)),
         "--W_um", str(s6p.get("W_nm", 1000.0) * 1e-3),
     ], cwd=root / "02_process_stages")
 
     save_json(outroot/"pipeline_outputs.json", {
         "poly_summary": str(poly_summary),
-        "device_inputs": str(s4_out/"device_inputs.json"),
-        "metal_metrics": str(s5_out/"metrics_stage5.json"),
-        "device_metrics": str(s6_out/"metrics_stage6.json"),
+        "stage2_metrics": str(s2_out/"summary.json"),
+        "stage3_metrics": str(s3_out/"summary.json"),
+        "implant_metrics": str(s4_out/"metrics.json"),
+        "metal_metrics": str(s5_out/"metrics.json"),
+        "device_metrics": str(s6_out/"metrics.json"),
     })
     print("✅ Done. Outputs:", outroot)
 

@@ -1,5 +1,5 @@
 {
-  "gds": "C:\\Users\\wbw\\Desktop\\virtual_minifab_7mask_fullpackage\\gds\\basic.gds",
+  "gds": "/workspaces/6202Project/gds/basic.gds",
   "top_cell": "00__mask_new",
   "bbox": [
     -25000.0,
