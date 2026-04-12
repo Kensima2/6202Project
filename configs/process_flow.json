@@ -66,7 +66,7 @@
   },
     "cvd": {
       "pixel_um": 0.02,
-      "target_thickness_um": 0.5,
+      "target_thickness_um": 0.55,
       "conformality": 0.95,
       "regime": "mass_transport",
       "temperature_C": 400.0,
