@@ -1,85 +1,125 @@
 # Project Guidelines
 
-## Domain
+## Scope
 
-Photolithography simulator for semiconductor manufacturing education. Simulates the optical lithography pipeline: GDS mask → aerial image (scalar diffraction) → resist development → CD extraction → process window analysis. Students extend a working baseline with RET techniques, resist models, and manufacturability metrics.
+This repository is a teaching-oriented Virtual Mini-Foundry flow.
+Default execution and verification entrypoint is the notebook `run.ipynb`.
+When users ask to run, validate, or tune the project, prefer notebook-equivalent stage commands and output paths.
 
-## Architecture
+## Source-of-Truth Workflow
 
-Focus area: `01_lithography/`. Entry point: `01_lithography/run_project.py`.
+Treat `run.ipynb` as the operational contract for stage order and CLI flags.
 
-| Module | Role |
-|--------|------|
-| `photolithography_baseline.py` | Core physics: mask building, aerial imaging (partial coherence), resist develop, CD extraction |
-| `spin_coating.py` | Thickness simulation (Meyerhofer model + radial non-uniformity) |
-| `opc.py` | Optical Proximity Correction (mask bias, morphological ops) |
-| `psm.py` | Phase Shift Mask (complex transmission with phase shifts) |
-| `smo.py` | Source-Mask Optimization (grid search over illumination + bias) |
-| `illumination.py` | Deterministic source sampling (annular, dipole) |
-| `mask_import.py` | KLayout PNG → mask `.npy` converter |
-| `metrics.py` | Process window area, NILS (1D), CD sensitivity |
+Standard order:
+1. Stage 1 lithography: `python 01_lithography/run_project.py --config configs/lithography_config.json`
+2. Stage 2 etch: `python 02_process_stages/stage2_etch.py --resist outputs/stage1_poly_litho/resist.npy ...`
+3. Stage 3 CVD: `python 02_process_stages/stage3_cvd.py --openings outputs/stage2_etch/etched_openings.npy ...`
+4. Stage 4 implant/thermal: `python 02_process_stages/stage4_thermal_implant.py ...`
+5. Stage 5 metallization/CMP: `python 02_process_stages/stage5_metallization_cmp.py ...`
+6. Stage 6 device proxy: `python 02_process_stages/stage6_device.py ...`
+7. Full flow option: `python 02_process_stages/run_7mask_pipeline.py --flow configs/process_flow.json --runname <name>`
 
-**Data flow**: `run_project.py` loads config → loops over dose/defocus pairs → calls `photolithography_baseline.simulate_one()` (which applies OPC/PSM if enabled → computes aerial image → develops resist → extracts CD) → aggregates into process window → saves figures + `metrics.json`.
+If notebook code and standalone docs conflict, follow notebook behavior first, then update docs/configs for consistency.
 
-The `02_process_stages/` pipeline (`run_7mask_pipeline.py`) calls `01_lithography` as its first stage, but for lithography development work focus on `run_project.py` directly.
+## Python Call Graph
 
-## Config
+Primary command relationships:
 
-**Only config used for lithography**: `configs/lithography_config.json`  
-See `configs/CONFIG_GUIDE.md` for full key documentation.
+- `run.ipynb` -> `01_lithography/run_project.py`
+	- `run_project.py` -> `photolithography_baseline.py`
+	- Optional RET path: `opc.py`, `psm.py`, `smo.py`, `illumination.py`, `spin_coating.py`, `metrics.py`
 
-Key sections:
-- `target_cd_nm`, `cd_tol_nm` — CD target ± tolerance (defines pass/fail)
-- `pattern`, `pitch_nm`, `duty_cycle` — mask geometry (`line_space_1d` or `contact_2d`)
-- `wavelength_nm`, `na`, `sigma_in/out`, `n_source_samples` — optical system
-- `dose_sweep`, `defocus_sweep_nm` — sweep ranges for process window
-- `ret.psm`, `ret.opc` — Resolution Enhancement controls
-- `spin_coating`, `resist_coupling` — optional thickness coupling
+- `run.ipynb` -> `02_process_stages/stage2_etch.py`
+- `run.ipynb` -> `02_process_stages/stage3_cvd.py`
+- `run.ipynb` -> `02_process_stages/stage4_thermal_implant.py`
+- `run.ipynb` -> `02_process_stages/stage5_metallization_cmp.py`
+- `run.ipynb` -> `02_process_stages/stage6_device.py`
 
-## Build and Run
+- `02_process_stages/run_7mask_pipeline.py` orchestrates:
+	- `gds_router/gds_to_masks.py`
+	- `01_lithography/run_project.py`
+	- `stage2_etch.py` -> `stage3_cvd.py` -> `stage4_thermal_implant.py` -> `stage5_metallization_cmp.py` -> `stage6_device.py`
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+## Config Mapping (Do Not Guess)
 
-# Run lithography simulation (primary workflow)
-cd 01_lithography
-python run_project.py --config ../configs/lithography_config.json --outdir ../outputs/stage1_poly_litho
+Use these exact mappings when changing params:
 
-# Quick standalone baseline demo
-python photolithography_baseline.py
+- `configs/lithography_config.json`
+	- Used by `01_lithography/run_project.py` in notebook Stage 1.
 
-# 2D contact simulation (slower)
-python run_project.py --config ../configs/config_2d_contact.json
-```
+- `configs/litho_config_pipeline.json`
+	- Used by `run_7mask_pipeline.py` for pipeline Stage 1 lithography.
 
-## Outputs
+- `configs/process_flow.json`
+	- Used by `run_7mask_pipeline.py` for stage params and mask strategy.
+	- Stage param roots:
+		- `stage_params.etch`
+		- `stage_params.cvd`
+		- `stage_params.implant_thermal`
+		- `stage_params.met_cmp`
+		- `stage_params.device`
 
-`outputs/` stores simulation results. Existing contents are stale — safe to overwrite or clear.  
-Each run produces: demo PNGs, process window plots, CD-vs-dose/defocus curves, and `metrics.json`.
+- `configs/notebook_tuned_params.json`
+	- Notebook-aligned tuned values reference; keep synchronized with Stage 2-6 notebook cells when asked.
 
-## Conventions
+- `configs/layer_map.json`
+	- Used by `gds_router/gds_to_masks.py` when `gds_input.enabled` is true.
 
-- **Unit suffixes in names**: `_nm` (nanometers), `_Pa_s` (viscosity), `_rad` (radians), `_px` (pixels)
-- **No SciPy by design**: morphological ops, Gaussian blur, circle fitting are all hand-rolled via NumPy/FFT for portability. Do not introduce scipy dependencies unless explicitly asked.
-- **Global knobs pattern**: `photolithography_baseline.py` has module-level variables (`TARGET_CD_NM`, `WAVELENGTH_NM`, `NA`, etc.) that `run_project.py` overwrites from config at runtime.
-- **Student extension points**: marked with `# Students can extend:` comments in code.
-- **Type hints**: functions use `def foo(x: float) -> np.ndarray:` style.
+## Output Contract (Critical)
 
-## Common Pitfalls
+Never change output filenames lightly; downstream stages depend on these names.
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| CD extraction returns 0 | Threshold too high / no resist remaining | Lower `develop_threshold` or increase `peb_blur_nm` |
-| Simulation very slow | Large `n_source_samples` (41+) × many sweep points | Reduce to ~12 for iteration, increase for final runs |
-| Process window all-red (fail) | CD target unreachable at given parameters | Relax `cd_tol_nm` or adjust `peb_blur_nm` |
-| 2D contact CD is None | Too few boundary pixels for circle fit | Increase resolution (`dx_nm`) or `sim_pitches` |
-| Memory overflow on 2D | Fine grid + large `sim_pitches` | Use coarser `dx_nm` or fewer pitches |
+- Stage 1 -> `outputs/stage1_poly_litho/resist.npy`, `metrics.json`
+- Stage 2 -> `outputs/stage2_etch/etched_openings.npy`, `summary.json`, rate/topology plots
+- Stage 3 -> `outputs/stage3_cvd/depth_map_um.npy`, `dielectric_thickness_map_um.npy`, `void_map.npy`, `summary.json`
+- Stage 4 -> `outputs/stage4_implant_thermal/metrics.json` + dopant/depth arrays
+- Stage 5 -> `outputs/stage5_metallization_cmp/metrics.json` + CMP arrays/plots
+- Stage 6 -> `outputs/stage6_device/metrics.json`
 
-## Grading (reference)
+Pipeline output:
+- `outputs/<timestamp>_<runname>/pipeline_outputs.json`
+- `outputs/<timestamp>_<runname>/stage{1..6}_*`
 
-See `01_lithography/GRADING_RUBRIC.md` for full details: Reproducibility (20), Baseline (20), Imaging/RET extension (20), Resist/process extension (20), Manufacturability metric (20), Bonus (+10/+5).
+If renaming output directories (for example to `outputs/final_team_run`), update path references in `pipeline_outputs.json` accordingly.
 
-## Tutorial Docs
+## Editing and Validation Rules
 
-`Project Tutorial/` contains `.docx` guides: Code_framework, Environment_Setup, KLayout_Python_ClosedLoop_Guide, Virtual_MiniFoundry_Code_Annotation_Guide.
+- Prefer parameter edits in notebook cells and configs before changing stage physics code.
+- Keep CLI argument names and path conventions stable across notebook and pipeline.
+- After Stage 2-6 changes, run a parity check when requested:
+	- one run via `run_7mask_pipeline.py`
+	- one run stage-by-stage via notebook-equivalent commands
+	- compare key JSON files and key `.npy` hashes
+- Treat mismatches as regressions until explained or fixed.
+
+## Project Conventions
+
+- Unit suffixes are required in variable names: `_nm`, `_um`, `_A`, `_cm2`, `_keV`, `_mTorr`.
+- NumPy + matplotlib only by default; do not add SciPy unless explicitly requested.
+- Preserve teaching readability over micro-optimizations.
+- Avoid hard-coded absolute paths in source code.
+
+## Pitfalls
+
+- Missing Stage 2 input for Stage 3: ensure `outputs/stage2_etch/etched_openings.npy` exists.
+- Inconsistent notebook vs config values: sync `run.ipynb` Stage cells with `process_flow.json`/`notebook_tuned_params.json` when tuning is finalized.
+- Stale outputs causing confusion: clear stage output directories before rerun when comparing experiments.
+
+## Reference Docs (Link, Do Not Duplicate)
+
+- Root overview: `README.md`
+- Lithography package details: `01_lithography/README.md`
+- Process chain details: `02_process_stages/README.md`
+- Tutorial package:
+	- `Project Tutorial/Code_framework.docx`
+	- `Project Tutorial/Environment_Setup.docx`
+	- `Project Tutorial/KLayout_Python_ClosedLoop_Guide.docx`
+	- `Project Tutorial/Virtual_MiniFoundry_Code_Annotation_Guide.docx`
+
+## Suggested Custom Skill
+
+If asked to automate recurring validation, create and use a skill that:
+- reruns pipeline and one-by-one chains,
+- checks parity for key outputs,
+- standardizes output folder finalization (`final_team_run`),
+- updates `pipeline_outputs.json` paths after renaming.
