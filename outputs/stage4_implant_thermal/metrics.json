@@ -1,0 +1,20 @@
+{
+  "dopant": "B",
+  "dose_cm2": 2000000000000000.0,
+  "energy_keV": 2.0,
+  "Rp_um": 0.033016052604635145,
+  "dRp_um": 0.0115556184116223,
+  "channeling": true,
+  "tilt_deg": 7.0,
+  "screen_oxide_nm": 10.0,
+  "pre_amorphous": true,
+  "anneal_method": "rta",
+  "anneal_T_C": 1050.0,
+  "anneal_time_s": 10.0,
+  "diffusion_sigma_um": 3.4146994306585487e-05,
+  "activation_fraction": 0.8956359925311675,
+  "background_cm3": 1000000000000000.0,
+  "peak_cm3": 6.184121139744143e+20,
+  "junction_depth_um": 0.093,
+  "sheet_resistance_ohm_per_sq": 17.45874823572836
+}
