@@ -1,11 +1,11 @@
 {
   "pixel_um": 0.02,
   "trench_depth_um": 0.3,
-  "target_thickness_um": 0.5,
-  "effective_thickness_um": 0.5,
+  "target_thickness_um": 0.55,
+  "effective_thickness_um": 0.55,
   "conformality": 0.95,
   "regime": "mass_transport",
   "temperature_C": 400.0,
   "hdp_cycles": 0,
-  "void_fraction": 0.015277777777777777
+  "void_fraction": 0.0
 }
