@@ -182,7 +182,7 @@ def main():
 
     def imsave(arr, name, title):
         plt.figure(figsize=(5,4))
-        plt.imshow(arr, origin="lower")
+        plt.imshow(arr, origin="lower", aspect="auto")
         plt.title(title)
         plt.tight_layout()
         plt.savefig(os.path.join(args.outdir, name), dpi=200)

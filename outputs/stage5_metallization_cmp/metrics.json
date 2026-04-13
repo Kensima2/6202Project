@@ -1,0 +1,11 @@
+{
+  "barrier_thickness_nm": 10.0,
+  "seed_thickness_nm": 30.0,
+  "overburden_um": 0.5,
+  "cmp_target_overburden_um": 0.195,
+  "mean_density": 0.27683934569358826,
+  "dishing_strength_um": 0.025,
+  "erosion_strength_um": 0.022,
+  "topo_range_um": 0.2907026708126068,
+  "copper_mean_um": 0.30164316296577454
+}

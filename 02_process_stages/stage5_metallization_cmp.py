@@ -36,8 +36,9 @@ def local_density(binmap: np.ndarray, radius_px: int = 25) -> np.ndarray:
     """Compute local pattern density via box filter."""
     k = 2*radius_px+1
     p = np.pad(binmap.astype(np.float32), radius_px, mode="edge")
-    # integral image for fast box sum
-    ii = p.cumsum(0).cumsum(1)
+    # integral image (SAT) with zero border: ii[i,j] = sum(p[0:i, 0:j])
+    ii = np.zeros((p.shape[0]+1, p.shape[1]+1), dtype=np.float32)
+    ii[1:, 1:] = p.cumsum(0).cumsum(1)
     def boxsum(y0,x0,y1,x1):
         return ii[y1,x1]-ii[y0,x1]-ii[y1,x0]+ii[y0,x0]
     H,W = binmap.shape
@@ -148,7 +149,7 @@ def main():
 
     def imsave(arr, name, title):
         plt.figure(figsize=(5,4))
-        plt.imshow(arr, origin="lower")
+        plt.imshow(arr, origin="lower", aspect="auto")
         plt.title(title)
         plt.tight_layout()
         plt.savefig(os.path.join(args.outdir, name), dpi=200)
