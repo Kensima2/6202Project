@@ -19,7 +19,7 @@
 
   "mask_strategy": {
     "POLY": {
-      "litho_config": "configs/litho_config_pipeline.json"
+      "litho_config": "configs/lithography_config.json"
     },
     "CONT": {
       "mode": "simple_litho",
@@ -54,36 +54,49 @@
   },
 
   "stage_params": {
-    "dx_nm": 10,
-
-  "etch": {
-    "pixel_um": 0.02,
-    "base_rate_Apm": 5000.0,
-    "film_thickness_A": 3000.0,
-    "pressure_mTorr": 15.0,
-    "rf_power_W": 400.0,
-    "magnetic_field_mT": 50.0
-  },
+    "etch": {
+      "pixel_um": 0.02,
+      "base_rate_Apm": 5500.0,
+      "film_thickness_A": 3000.0,
+      "pressure_mTorr": 12.0,
+      "rf_power_W": 500.0,
+      "magnetic_field_mT": 50.0
+    },
+    "cvd": {
+      "pixel_um": 0.02,
+      "trench_depth_um": 0.3,
+      "target_thickness_um": 0.55,
+      "conformality": 0.95,
+      "regime": "mass_transport",
+      "temperature_C": 400.0,
+      "hdp_cycles": 0,
+      "hdp_sputter_frac": 0.25
+    },
     "implant_thermal": {
-      "implant_dose_cm2": 1e13,
-      "implant_energy_keV": 20.0,
+      "dopant": "B",
+      "dose_cm2": 2e15,
+      "energy_keV": 4.0,
       "tilt_deg": 7.0,
       "channeling": true,
-      "screen_oxide_nm": 0.0,
-      "anneal_mode": "RTA",
-      "T_C": 1000.0,
-      "t_s": 10.0
+      "screen_oxide_nm": 10.0,
+      "pre_amorphous": true,
+      "anneal_method": "rta",
+      "anneal_T_C": 1050.0,
+      "anneal_time_s": 10.0
     },
     "met_cmp": {
-      "overburden_nm": 300.0,
-      "target_overburden_nm": 0.0,
-      "pattern_density_window": 31
+      "barrier_nm": 10.0,
+      "seed_nm": 40.0,
+      "overburden_um": 0.8,
+      "cmp_target_overburden_um": 0.184548,
+      "dishing_strength_um": 0.05,
+      "erosion_strength_um": 0.02
     },
     "device": {
-      "tox_nm": 2.0,
-      "W_nm": 1000.0,
-      "Leff_sigma_nm": 2.0,
-      "vt_target_max": 0.7
+      "cd_nom_nm": 170.0,
+      "tox_nm": 1.2,
+      "temp_C": 25.0,
+      "W_um": 2.0
     }
   }
 }
