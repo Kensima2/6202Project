@@ -1,12 +1,12 @@
 {
   "Leff_nm": 137.5783678304013,
   "lateral_bias_nm": 16.21081608479935,
-  "tox_nm": 1.2,
+  "tox_nm": 1.0,
   "Na_proxy_peak_cm3": 1.2974762785010525e+21,
   "sheet_R_ohm_per_sq": 43.62313523757287,
   "cu_mean_um": 0.30000001192092896,
-  "Vt_proxy_V": 0.8787050313252668,
-  "Ioff_proxy_A": 1.2963764518006402e-05,
+  "Vt_proxy_V": 0.8727050313252668,
+  "Ioff_proxy_A": 1.3628430938005187e-05,
   "Ron_proxy_ohm": 3.00079987281507,
   "interconnect_R_proxy_ohm": 5.666666441493573
 }

@@ -94,7 +94,7 @@
     },
     "device": {
       "cd_nom_nm": 170.0,
-      "tox_nm": 1.2,
+      "tox_nm": 1.0,
       "temp_C": 25.0,
       "W_um": 2.0
     }
