@@ -1,8 +1,0 @@
-{
-  "stage1_resist": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage1_poly_litho/resist.npy",
-  "stage2_summary": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage2_etch/summary.json",
-  "stage3_summary": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage3_cvd/summary.json",
-  "stage4_metrics": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage4_implant_thermal/metrics.json",
-  "stage5_metrics": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage5_metallization_cmp/metrics.json",
-  "stage6_metrics": "/workspaces/6202Project/outputs/20260417_114143_clean_final/stage6_device/metrics.json"
-}

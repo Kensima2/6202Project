@@ -74,12 +74,12 @@
     },
     "implant_thermal": {
       "dopant": "B",
-      "dose_cm2": 2e15,
-      "energy_keV": 4.0,
+      "dose_cm2": 5e14,
+      "energy_keV": 0.5,
       "tilt_deg": 7.0,
-      "channeling": true,
+      "channeling": false,
       "screen_oxide_nm": 10.0,
-      "pre_amorphous": true,
+      "pre_amorphous": false,
       "anneal_method": "rta",
       "anneal_T_C": 1050.0,
       "anneal_time_s": 10.0
