@@ -74,7 +74,7 @@
     },
     "implant_thermal": {
       "dopant": "B",
-      "dose_cm2": 5e14,
+      "dose_cm2": 8e14,
       "energy_keV": 0.5,
       "tilt_deg": 7.0,
       "channeling": false,

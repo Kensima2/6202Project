@@ -76,10 +76,15 @@ def run_stage1_litho(root: Path, flow: dict, stage1_out: Path):
     if not resist.exists():
         raise FileNotFoundError(f"Stage 1 did not produce resist file at {resist}")
 
-    shutil.copy2(resist, stage1_out / "resist.npy")
-    metrics = src / "metrics.json"
-    if metrics.exists():
-        shutil.copy2(metrics, stage1_out / "metrics.json")
+    # Keep Stage 1 artifacts identical to notebook one-by-one outputs.
+    for item in src.iterdir():
+        dst = stage1_out / item.name
+        if item.is_file():
+            shutil.copy2(item, dst)
+        elif item.is_dir():
+            if dst.exists():
+                shutil.rmtree(dst)
+            shutil.copytree(item, dst)
 
 
 def main():

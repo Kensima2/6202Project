@@ -1,6 +1,6 @@
 {
   "dopant": "B",
-  "dose_cm2": 500000000000000.0,
+  "dose_cm2": 800000000000000.0,
   "energy_keV": 0.5,
   "Rp_um": 0.0062553722367030325,
   "dRp_um": 0.002189380282846061,
@@ -14,7 +14,7 @@
   "diffusion_sigma_um": 3.4146994306585487e-05,
   "activation_fraction": 0.8956359925311675,
   "background_cm3": 1000000000000000.0,
-  "peak_cm3": 8.109226740631579e+20,
+  "peak_cm3": 1.2974762785010525e+21,
   "junction_depth_um": 0.018000000000000002,
-  "sheet_resistance_ohm_per_sq": 69.79701638011657
+  "sheet_resistance_ohm_per_sq": 43.62313523757287
 }
